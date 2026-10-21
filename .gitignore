@@ -4,3 +4,15 @@ bin/
 obj/
 .vs/
 node_modules/
+
+# Secrets and local config
+.env
+*.pem
+*.key
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log

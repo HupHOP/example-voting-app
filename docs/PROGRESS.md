@@ -59,3 +59,18 @@ Command: `docker compose ps` (exit 0)
 ```text
 NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
 ```
+
+## 2026-10-22 09:39
+
+Step 2 verified: all services running as non-root (vote and worker uid 10001, result uid 1000); final stage of vote built and served HTTP 200
+
+Command: `docker compose ps` (exit 0)
+
+```text
+NAME                          IMAGE                       COMMAND                  SERVICE   CREATED             STATUS                    PORTS
+example-voting-app-db-1       postgres:15-alpine          "docker-entrypoint.s…"   db        About an hour ago   Up 17 seconds (healthy)   5432/tcp
+example-voting-app-redis-1    redis:alpine                "docker-entrypoint.s…"   redis     About an hour ago   Up 17 seconds (healthy)   6379/tcp
+example-voting-app-result-1   example-voting-app-result   "nodemon --inspect=0…"   result    14 minutes ago      Up 11 seconds             127.0.0.1:9229->9229/tcp, 0.0.0.0:8081->80/tcp, [::]:8081->80/tcp
+example-voting-app-vote-1     example-voting-app-vote     "python app.py"          vote      14 minutes ago      Up 11 seconds (healthy)   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+example-voting-app-worker-1   example-voting-app-worker   "dotnet Worker.dll"      worker    14 minutes ago      Up 11 seconds             
+```

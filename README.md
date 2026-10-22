@@ -26,3 +26,18 @@ Result page showing the count:
 All containers running:
 
 ![docker compose ps](docs/images/step1-terminal.jpg)
+
+## Step 2: Containerize it safely
+
+- **Pinned base images** by digest in all three Dockerfiles (`python:3.11-slim`, `node:18-slim`, `dotnet/sdk:7.0` and `dotnet/runtime:7.0`), so builds are reproducible.
+- **Non-root:** vote and worker run as `appuser` (UID 10001); result runs as the built-in `node` user (UID 1000).
+- **`.dockerignore`** added for vote and worker and tightened for result, so `node_modules`, `bin/obj`, `.git`, env files and keys stay out of the build context.
+
+### Verification
+
+```text
+docker compose exec vote id     -> uid=10001(appuser)
+docker compose exec result id   -> uid=1000(node)
+docker compose exec worker id   -> uid=10001(appuser)
+docker build --target final ./vote  -> builds and serves HTTP 200
+```

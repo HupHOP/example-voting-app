@@ -49,3 +49,13 @@ Hit DNS timeouts pulling base images on the first build; retried and all images 
 ## 2026-10-22 07:48
 
 Added Step 1 screenshots and wrote the README with proof of the app running
+
+## 2026-10-22 09:32
+
+Step 2: pinned base images, non-root users and .dockerignore files. Intermittent DNS failures during builds fixed by retrying
+
+Command: `docker compose ps` (exit 0)
+
+```text
+NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
+```

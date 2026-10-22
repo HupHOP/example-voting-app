@@ -16,3 +16,6 @@ node_modules/
 *.tfstate.*
 *.tfvars
 crash.log
+
+# Windows download metadata
+*:Zone.Identifier

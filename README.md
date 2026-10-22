@@ -41,3 +41,19 @@ docker compose exec result id   -> uid=1000(node)
 docker compose exec worker id   -> uid=10001(appuser)
 docker build --target final ./vote  -> builds and serves HTTP 200
 ```
+
+## Setup and issues hit so far
+
+### Environment
+
+- Windows with Ubuntu on WSL 2, Docker Desktop with WSL integration enabled for the Ubuntu distro.
+- Git authentication over HTTPS with a GitHub personal access token (repo and workflow scopes), stored outside the repo.
+
+### Issues and fixes
+
+| Issue | Cause | Fix |
+|---|---|---|
+| `docker: command not found` in Ubuntu | Docker Desktop WSL integration was off | Enabled it under Settings, Resources, WSL integration, then `wsl --shutdown` and reopened Ubuntu |
+| Image pulls and `pip install` failed with `no such host` during builds | Intermittent DNS failures inside Docker | Retried the build loop, and set public DNS (8.8.8.8, 1.1.1.1) in Docker Engine settings |
+| `Password authentication is not supported` on clone | GitHub no longer accepts account passwords for Git | Used a personal access token as the password |
+| `:Zone.Identifier` files appeared next to screenshots | Windows metadata added when copying files into WSL | Deleted them and added `*:Zone.Identifier` to `.gitignore` |

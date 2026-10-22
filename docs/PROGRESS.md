@@ -74,3 +74,7 @@ example-voting-app-result-1   example-voting-app-result   "nodemon --inspect=0â€
 example-voting-app-vote-1     example-voting-app-vote     "python app.py"          vote      14 minutes ago      Up 11 seconds (healthy)   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
 example-voting-app-worker-1   example-voting-app-worker   "dotnet Worker.dll"      worker    14 minutes ago      Up 11 seconds             
 ```
+
+## 2026-10-22 13:19
+
+Added setup notes and troubleshooting table to the README

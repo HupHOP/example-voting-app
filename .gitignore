@@ -19,3 +19,6 @@ crash.log
 
 # Windows download metadata
 *:Zone.Identifier
+
+# Cluster credentials
+terraform/kubeconfig

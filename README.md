@@ -57,3 +57,27 @@ docker build --target final ./vote  -> builds and serves HTTP 200
 | Image pulls and `pip install` failed with `no such host` during builds | Intermittent DNS failures inside Docker | Retried the build loop, and set public DNS (8.8.8.8, 1.1.1.1) in Docker Engine settings |
 | `Password authentication is not supported` on clone | GitHub no longer accepts account passwords for Git | Used a personal access token as the password |
 | `:Zone.Identifier` files appeared next to screenshots | Windows metadata added when copying files into WSL | Deleted them and added `*:Zone.Identifier` to `.gitignore` |
+
+## Step 3: Kubernetes cluster with Terraform
+
+I do not have access to a cloud account (no AWS account), so the cluster is a local [kind](https://kind.sigs.k8s.io/) cluster created with Terraform (`tehcyx/kind` provider). It runs in Docker on my machine, so it is **not** in a cloud default VPC. This is a limitation of this submission.
+
+- Code: [terraform/main.tf](terraform/main.tf) and [terraform/outputs.tf](terraform/outputs.tf)
+- One control-plane node, with NodePorts 31000 (vote) and 31001 (result) mapped to the host
+- The kubeconfig and Terraform state are excluded from Git
+
+```bash
+cd terraform
+terraform init
+terraform apply
+export KUBECONFIG=$PWD/kubeconfig
+kubectl get nodes
+```
+
+### Verification
+
+`terraform destroy` followed by `terraform apply` brought the cluster back from code alone, and `kubectl get nodes` showed `capstone-control-plane` as `Ready`.
+
+### Issue hit
+
+Pulling the `kindest/node` image failed repeatedly with `unexpected EOF` and TLS handshake timeouts on an unstable connection. Retrying `docker pull` in a loop fixed it, since Docker keeps layers that already downloaded.

@@ -78,3 +78,14 @@ example-voting-app-worker-1   example-voting-app-worker   "dotnet Worker.dll"   
 ## 2026-10-22 13:19
 
 Added setup notes and troubleshooting table to the README
+
+## 2026-10-23 09:14
+
+Step 3 (local fallback): destroyed and recreated the kind cluster with Terraform; node Ready again. First apply was slow because the kindest/node image download kept failing with unexpected EOF; retrying the pull with a loop fixed it
+
+Command: `kubectl get nodes --kubeconfig terraform/kubeconfig` (exit 0)
+
+```text
+NAME                     STATUS   ROLES           AGE    VERSION
+capstone-control-plane   Ready    control-plane   112s   v1.37.0
+```

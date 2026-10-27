@@ -81,3 +81,13 @@ kubectl get nodes
 ### Issue hit
 
 Pulling the `kindest/node` image failed repeatedly with `unexpected EOF` and TLS handshake timeouts on an unstable connection. Retrying `docker pull` in a loop fixed it, since Docker keeps layers that already downloaded.
+
+### Issue: Trivy gate failed on the result image
+
+The first pipeline run blocked the result image on 7 fixable CRITICAL findings: `libgnutls30` and `perl-base` in the Debian base, `proxy-addr` in the app's lockfile, and `tar` bundled inside npm. Fixes, kept minimal:
+
+- Added `apt-get upgrade` to the Dockerfile so Debian security patches are applied. A newer `node:18-slim` would not help because Node 18 is end of life and its images are no longer rebuilt.
+- Refreshed `package-lock.json` so `proxy-addr` resolves to 2.0.8.
+- Removed npm from the final image, since it is only needed at build time. This also removes its bundled `tar`.
+
+The longer-term fix is moving to a supported Node version.

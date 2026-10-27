@@ -93,3 +93,7 @@ capstone-control-plane   Ready    control-plane   112s   v1.37.0
 ## 2026-10-27 09:37
 
 Step 4: added GitHub Actions pipeline (tests, build, Trivy, push to ghcr.io tagged with commit SHA). Decisions: ghcr.io registry, deploy via temporary kind cluster in CI (to be added with the Helm chart). Pinned trivy-action to the safe v0.35.0 commit.
+
+## 2026-10-27 12:02
+
+Step 4: first CI run - vote passed, result failed the Trivy gate (5 OS and 2 Node CRITICAL). Fixed result: apt-get upgrade, proxy-addr lockfile refresh, removed npm from final image. Worker still to fix.

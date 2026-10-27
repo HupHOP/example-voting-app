@@ -89,3 +89,7 @@ Command: `kubectl get nodes --kubeconfig terraform/kubeconfig` (exit 0)
 NAME                     STATUS   ROLES           AGE    VERSION
 capstone-control-plane   Ready    control-plane   112s   v1.37.0
 ```
+
+## 2026-10-27 09:37
+
+Step 4: added GitHub Actions pipeline (tests, build, Trivy, push to ghcr.io tagged with commit SHA). Decisions: ghcr.io registry, deploy via temporary kind cluster in CI (to be added with the Helm chart). Pinned trivy-action to the safe v0.35.0 commit.

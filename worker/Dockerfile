@@ -21,8 +21,14 @@ RUN dotnet restore -a $TARGETARCH
 COPY . .
 RUN dotnet publish -c release -o /app -a $TARGETARCH --self-contained false --no-restore
 
-# app image
-FROM mcr.microsoft.com/dotnet/runtime:7.0@sha256:8cd26108e7a329458e5b84342816ae39b2b38bd041cfdc0b79b8cf1c0e0d376f
+# app image: .NET 7 runtime on Debian 12 (the default 7.0 tag is Debian 11,
+# which no longer receives security updates)
+FROM mcr.microsoft.com/dotnet/runtime:7.0-bookworm-slim@sha256:f24ddd398454193219bd21979029cdefb51fcda577a497eff519c84ac736c110
+
+# apply Debian security fixes
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create an unprivileged user to run the app
 RUN groupadd --system --gid 10001 appuser && \

@@ -97,3 +97,7 @@ Step 4: added GitHub Actions pipeline (tests, build, Trivy, push to ghcr.io tagg
 ## 2026-10-27 12:02
 
 Step 4: first CI run - vote passed, result failed the Trivy gate (5 OS and 2 Node CRITICAL). Fixed result: apt-get upgrade, proxy-addr lockfile refresh, removed npm from final image. Worker still to fix.
+
+## 2026-10-27 14:28
+
+Step 4: worker failed the Trivy gate (6 OS and 1 NuGet CRITICAL on Debian 11). Fixed by switching to dotnet runtime 7.0-bookworm-slim pinned by digest, adding apt-get upgrade, and pinning System.Drawing.Common 5.0.3.

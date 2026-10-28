@@ -100,3 +100,12 @@ The worker failed the gate on 7 fixable CRITICAL findings: `libgnutls30` and the
 - Added an explicit `System.Drawing.Common` 5.0.3 package reference to override the vulnerable transitive version.
 
 .NET 7 itself is end of life. The longer-term fix is moving the worker to a currently supported .NET version.
+
+### Issue: Trivy gate failed on the worker image
+
+The worker failed the gate on 7 fixable CRITICAL findings: `libgnutls30` and the `krb5` libraries in the Debian base, and `System.Drawing.Common` 5.0.0 in the app dependencies. Trivy also warned that the base OS (Debian 11) is no longer supported. The default `dotnet/runtime:7.0` tag is the Debian 11 variant. Fixes, kept minimal:
+
+- Switched the runtime stage to `dotnet/runtime:7.0-bookworm-slim` (same .NET 7 runtime on Debian 12), pinned by digest, and added `apt-get upgrade` so security patches are applied.
+- Added an explicit `System.Drawing.Common` 5.0.3 package reference to override the vulnerable transitive version.
+
+.NET 7 itself is end of life. The longer-term fix is moving the worker to a currently supported .NET version.

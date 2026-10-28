@@ -101,3 +101,7 @@ Step 4: first CI run - vote passed, result failed the Trivy gate (5 OS and 2 Nod
 ## 2026-10-27 14:28
 
 Step 4: worker failed the Trivy gate (6 OS and 1 NuGet CRITICAL on Debian 11). Fixed by switching to dotnet runtime 7.0-bookworm-slim pinned by digest, adding apt-get upgrade, and pinning System.Drawing.Common 5.0.3.
+
+## 2026-10-28 14:22
+
+Step 4: worker failed the Trivy gate (6 OS and 1 NuGet CRITICAL on Debian 11). Fixed by switching to dotnet runtime 7.0-bookworm-slim pinned by digest, adding apt-get upgrade, and pinning System.Drawing.Common 5.0.3.

@@ -109,3 +109,97 @@ The worker failed the gate on 7 fixable CRITICAL findings: `libgnutls30` and the
 - Added an explicit `System.Drawing.Common` 5.0.3 package reference to override the vulnerable transitive version.
 
 .NET 7 itself is end of life. The longer-term fix is moving the worker to a currently supported .NET version.
+
+### Rollback evidence
+
+The first install attempt (revision 1) timed out while the images were still downloading over a slow connection, so Helm marked it `failed`. Re-running the same command succeeded as revision 2, which is the healthy baseline for the demo.
+
+**1. Baseline (revision 2).** All five pods running, and both the vote and result pages return `200 OK`.
+
+![Baseline](docs/images/step5-helm-1-baseline.jpg)
+
+**2. Bad release (revision 3).** Deployed on purpose with a vote image tag that does not exist:
+
+```text
+helm upgrade voting-app charts/voting-app -n voting --set vote.tag=this-tag-does-not-exist --wait --timeout 60s
+```
+
+The upgrade failed, the new vote pod went into `ImagePullBackOff`, and the release was marked `failed`. The old vote pod kept running, so the vote page still returned `200 OK`.
+
+![Failed release](docs/images/step5-helm-2-failed.jpg)
+
+**3. Rollback (revision 4).**
+
+```text
+helm rollback voting-app 2 -n voting --wait --timeout 3m
+```
+
+Helm created revision 4 (`Rollback to 2`), the broken pod was removed, and all five pods are healthy again.
+
+![After rollback](docs/images/step5-helm-3-rollback.jpg)
+
+| Revision | Status | What happened |
+|---|---|---|
+| 1 | superseded | First install, timed out while images downloaded |
+| 2 | deployed, then superseded | Successful install, the healthy baseline |
+| 3 | failed | Bad release (nonexistent vote tag) |
+| 4 | deployed | Rollback to revision 2 |
+
+## Step 5: Deploy and roll back with Helm
+
+One chart ([charts/voting-app](charts/voting-app)) and one values file ([values.yaml](charts/voting-app/values.yaml)) deploy the whole app: vote, result, worker, redis and db. The images come from ghcr.io, tagged with the commit SHA that CI built. Redis and Postgres are pinned by digest.
+
+```text
+helm upgrade --install voting-app charts/voting-app --namespace voting --create-namespace --wait --timeout 5m
+```
+
+Vote is at http://localhost:31000 and result at http://localhost:31001 (NodePorts mapped from the kind cluster to the host in the Terraform config).
+
+### Design notes
+
+- **Service names `db` and `redis` are fixed.** The application code connects to those hostnames, so the services cannot take release-prefixed names.
+- **Port 80 as non-root.** The vote and result images run as non-root users but listen on port 80, so the pod sets the `net.ipv4.ip_unprivileged_port_start` sysctl to 0. Containers also drop all capabilities and disallow privilege escalation.
+- **Demo credentials.** The database credentials (`postgres`/`postgres`) are hardcoded in the application code, so they sit in `values.yaml`. They protect nothing real and cannot be changed without changing the app.
+- **Storage is an emptyDir** for redis and Postgres, so data is lost if those pods are replaced. This is acceptable for a demo.
+- **Resource requests and limits** are small because the local machine has limited memory.
+
+### Rollback demo
+
+The first install attempt (revision 1) timed out while the images were still downloading over a slow connection, so Helm marked it `failed`. Re-running the same command succeeded as revision 2, which is the healthy baseline for the demo.
+
+**1. Baseline (revision 2).** All five pods running, and both the vote and result pages return `200 OK`.
+
+![Baseline](docs/images/step5-helm-1-baseline.jpg)
+
+**2. Bad release (revision 3).** Deployed on purpose with a vote image tag that does not exist:
+
+```text
+helm upgrade voting-app charts/voting-app -n voting --set vote.tag=this-tag-does-not-exist --wait --timeout 60s
+```
+
+The upgrade failed, the new vote pod went into `ImagePullBackOff`, and the release was marked `failed`. The old vote pod kept running, so the vote page still returned `200 OK`.
+
+![Failed release](docs/images/step5-helm-2-failed.jpg)
+
+**3. Rollback.**
+
+```text
+helm rollback voting-app 2 -n voting --wait --timeout 3m
+```
+
+The rollback was run twice, both times to revision 2 (revisions 4 and 5), with the same result. The broken pod was removed and all five pods are healthy again.
+
+![After rollback](docs/images/step5-helm-3-rollback.jpg)
+
+| Revision | Status | What happened |
+|---|---|---|
+| 1 | superseded | First install, timed out while images downloaded |
+| 2 | superseded | Successful install, the healthy baseline |
+| 3 | failed | Bad release (nonexistent vote tag), `ImagePullBackOff` |
+| 4 | superseded | First rollback to revision 2 |
+| 5 | deployed | Second rollback to revision 2 (current) |
+
+### Status
+
+- Done: the chart, the deployment to the local cluster, and the rollback.
+- To do: add the deploy job to the CI pipeline (temporary kind cluster + `helm install` + smoke test), the architecture diagram, and the final README tidy-up.

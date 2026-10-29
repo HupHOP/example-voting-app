@@ -1,0 +1,64 @@
+# Our three images are built and pushed by CI (.github/workflows/ci.yml) to
+# ghcr.io, tagged with the commit SHA. Each service can override the tag.
+image:
+  registry: ghcr.io/huphop
+  tag: "8cb59d455e9788a817d8997bf4ce9906a7002483"
+  pullPolicy: IfNotPresent
+
+vote:
+  tag: ""
+  replicas: 1
+  nodePort: 31000
+  runAsUser: 10001
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+result:
+  tag: ""
+  replicas: 1
+  nodePort: 31001
+  runAsUser: 1000
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+worker:
+  tag: ""
+  replicas: 1
+  runAsUser: 10001
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+# redis:alpine and postgres:15-alpine, pinned by digest
+redis:
+  image: redis@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      memory: 128Mi
+
+db:
+  image: postgres@sha256:f7d23353e1b15400d22ebe31189f4d314b87a4c129cc400c8c2d8d4ca127bf81
+  # Demo credentials. The application code hardcodes postgres/postgres,
+  # so they cannot be changed without changing the app.
+  user: postgres
+  password: postgres
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi

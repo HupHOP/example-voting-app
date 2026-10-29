@@ -1,0 +1,6 @@
+Voting app installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Vote:   http://localhost:{{ .Values.vote.nodePort }}
+Result: http://localhost:{{ .Values.result.nodePort }}
+
+(These ports are mapped from the kind cluster to the host by the Terraform config.)

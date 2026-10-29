@@ -105,3 +105,11 @@ Step 4: worker failed the Trivy gate (6 OS and 1 NuGet CRITICAL on Debian 11). F
 ## 2026-10-28 14:22
 
 Step 4: worker failed the Trivy gate (6 OS and 1 NuGet CRITICAL on Debian 11). Fixed by switching to dotnet runtime 7.0-bookworm-slim pinned by digest, adding apt-get upgrade, and pinning System.Drawing.Common 5.0.3.
+
+## 2026-10-29 04:09
+
+Step 5: rollback demo complete. Revision 3 (bad vote tag) failed with ImagePullBackOff while the old pod kept serving; helm rollback to revision 2 created revision 4. Screenshots saved in docs/images.
+
+## 2026-10-29 04:17
+
+Step 5: rollback demo complete. Revision 3 (bad vote tag) failed with ImagePullBackOff while the old pod kept serving; helm rollback to revision 2 run twice (revisions 4 and 5). Screenshots saved in docs/images and README history corrected.

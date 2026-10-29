@@ -113,3 +113,7 @@ Step 5: rollback demo complete. Revision 3 (bad vote tag) failed with ImagePullB
 ## 2026-10-29 04:17
 
 Step 5: rollback demo complete. Revision 3 (bad vote tag) failed with ImagePullBackOff while the old pod kept serving; helm rollback to revision 2 run twice (revisions 4 and 5). Screenshots saved in docs/images and README history corrected.
+
+## 2026-10-29 04:24
+
+Step 4/5: added CI deploy job (temporary kind cluster, helm install with the pushed image tag, end-to-end smoke test: vote reaches Postgres via the worker).

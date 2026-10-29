@@ -115,3 +115,76 @@ jobs:
           tags: ${{ env.IMAGE }}:${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.service }}
+
+  deploy:
+    name: Deploy to a temporary kind cluster
+    needs: build-scan-push
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      # kind, kubectl and helm are preinstalled on the GitHub runner image
+      - name: Tool versions
+        run: |
+          kind version
+          kubectl version --client
+          helm version
+
+      - name: Create a temporary kind cluster
+        run: kind create cluster --name ci --wait 120s
+
+      - name: Deploy the Helm chart with the image tag that was just pushed
+        run: |
+          helm upgrade --install voting-app charts/voting-app \
+            --namespace voting --create-namespace \
+            --set image.tag=${{ github.sha }} \
+            --wait --timeout 5m
+
+      - name: Smoke test - cast a vote and check it reaches the database
+        run: |
+          set -euo pipefail
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+
+          kubectl get pods -n voting
+          kubectl port-forward -n voting svc/vote 8080:5000 > /tmp/pf-vote.log 2>&1 &
+          kubectl port-forward -n voting svc/result 8081:5001 > /tmp/pf-result.log 2>&1 &
+          sleep 5
+
+          echo "Vote page:"
+          curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:8080/
+          echo "Result page:"
+          curl -fsS -o /dev/null -w "%{http_code}\n" http://localhost:8081/
+
+          echo "Casting a vote"
+          curl -fsS -o /dev/null -w "%{http_code}\n" -X POST -d "vote=a" http://localhost:8080/
+
+          echo "Waiting for the worker to move the vote into the database"
+          for i in $(seq 1 30); do
+            count=$(kubectl exec -n voting deploy/db -- psql -U postgres -tAc "SELECT count(*) FROM votes" 2>/dev/null || echo 0)
+            echo "votes in database: ${count:-0}"
+            if [ "${count:-0}" -ge 1 ]; then
+              echo "Smoke test passed"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Smoke test failed: the vote never reached the database"
+          exit 1
+
+      - name: Diagnostics (only on failure)
+        if: failure()
+        run: |
+          kubectl get pods -n voting -o wide || true
+          kubectl describe pods -n voting || true
+          for app in vote result worker redis db; do
+            echo "== logs: $app =="
+            kubectl logs -n voting -l app=$app --tail=40 || true
+          done
+
+      - name: Delete the temporary cluster
+        if: always()
+        run: kind delete cluster --name ci || true

@@ -201,5 +201,16 @@ The rollback was run twice, both times to revision 2 (revisions 4 and 5), with t
 
 ### Status
 
-- Done: the chart, the deployment to the local cluster, and the rollback.
-- To do: add the deploy job to the CI pipeline (temporary kind cluster + `helm install` + smoke test), the architecture diagram, and the final README tidy-up.
+- Done: the chart, the deployment to the local cluster, the rollback, and the CI deploy job.
+- To do: the architecture diagram and the final README tidy-up.
+
+## CI deploy job (completes Step 4)
+
+After the build, scan and push jobs succeed on a push to `main`, a `deploy` job in [ci.yml](.github/workflows/ci.yml) does the following on a GitHub-hosted runner:
+
+1. Creates a temporary kind cluster (`kind`, `kubectl` and `helm` are preinstalled on the runner image, so no third-party action is needed).
+2. Installs the Helm chart with `--set image.tag=<commit SHA>`, so it deploys the images that run just pushed to ghcr.io.
+3. Runs an end-to-end smoke test: loads the vote and result pages, casts a vote, and polls Postgres until the worker has moved the vote into the `votes` table.
+4. Deletes the cluster, even if a step failed. On failure it prints pod descriptions and logs first.
+
+So one push builds, scans, deploys and verifies, with no manual step. This is the Option B approach described under Step 4: the pipeline deploys to a disposable cluster, not to my long-lived local cluster, because GitHub's runners cannot reach a cluster on my laptop and I have no cloud account. The real deployment and the rollback demo run against the local cluster with Helm (Step 5).

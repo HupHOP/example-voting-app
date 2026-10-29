@@ -117,3 +117,7 @@ Step 5: rollback demo complete. Revision 3 (bad vote tag) failed with ImagePullB
 ## 2026-10-29 04:24
 
 Step 4/5: added CI deploy job (temporary kind cluster, helm install with the pushed image tag, end-to-end smoke test: vote reaches Postgres via the worker).
+
+## 2026-10-29 04:46
+
+README updated: CI deploy job verified green and documented.

@@ -121,3 +121,7 @@ Step 4/5: added CI deploy job (temporary kind cluster, helm install with the pus
 ## 2026-10-29 04:46
 
 README updated: CI deploy job verified green and documented.
+
+## 2026-10-29 07:47
+
+Final Capstone 1 tidy-up: CI screenshots, architecture and pipeline diagrams, requirements checklist and limitations in the README. Verified no secrets in history and rebuilt the cluster from code.

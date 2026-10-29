@@ -4,6 +4,88 @@ Forked from [dockersamples/example-voting-app](https://github.com/dockersamples/
 
 The raw working notes are in [docs/PROGRESS.md](docs/PROGRESS.md).
 
+## Overview
+
+This project takes the Docker example voting app from code to an automatic, reproducible deployment: hardened containers, a Terraform-built Kubernetes cluster, a GitHub Actions pipeline that builds, scans and deploys, and a Helm chart with rollback.
+
+### Architecture
+
+```mermaid
+flowchart LR
+    browser([Browser])
+    tf([Terraform])
+    subgraph cluster["kind cluster (namespace: voting)"]
+        vote["vote<br/>Flask + gunicorn"]
+        result["result<br/>Node.js"]
+        worker["worker<br/>.NET"]
+        redis[("redis")]
+        db[("PostgreSQL (db)")]
+    end
+    browser -->|port 31000| vote
+    browser -->|port 31001| result
+    vote -->|queue vote| redis
+    worker -->|take vote| redis
+    worker -->|save vote| db
+    result -->|read totals| db
+    tf -.->|creates| cluster
+```
+
+### CI/CD pipeline
+
+```mermaid
+flowchart LR
+    push([git push to main]) --> test[Tests]
+    test --> build["Build images<br/>vote, result, worker"]
+    build --> scan["Trivy scan<br/>fails on fixable CRITICAL"]
+    scan --> publish["Push to ghcr.io<br/>tag = commit SHA"]
+    publish --> deploy["Deploy with Helm to a<br/>temporary kind cluster"]
+    deploy --> smoke["Smoke test<br/>vote reaches PostgreSQL"]
+    smoke --> cleanup[Delete the cluster]
+    publish -.->|helm upgrade and rollback by hand| local["Local kind cluster<br/>created by Terraform"]
+```
+
+### Repository map
+
+| Path | What it is |
+|---|---|
+| `vote/`, `result/`, `worker/` | The three services, with hardened Dockerfiles (pinned base images, non-root, `.dockerignore`) |
+| `terraform/` | Terraform code that creates the local kind cluster |
+| `charts/voting-app/` | The Helm chart: one chart, one values file |
+| `.github/workflows/ci.yml` | The CI/CD pipeline |
+| `docs/PROGRESS.md` | Raw working log |
+| `docs/images/` | Screenshots used as evidence |
+
+### Reproduce it
+
+Requirements: Docker, Terraform, kubectl and Helm.
+
+```bash
+cd terraform
+terraform init
+terraform apply
+export KUBECONFIG=$PWD/kubeconfig
+cd ..
+helm upgrade --install voting-app charts/voting-app --namespace voting --create-namespace --wait --timeout 10m
+```
+
+Vote at http://localhost:31000 and see the results at http://localhost:31001.
+
+### Requirements checklist
+
+| Requirement | How it is met |
+|---|---|
+| One push builds, scans and deploys | `ci.yml`: tests, build, Trivy scan, push to ghcr.io, then a deploy job with an end-to-end smoke test (see Step 4) |
+| The environment rebuilds from code | `terraform destroy` then `terraform apply` recreates the cluster, and `helm upgrade --install` redeploys the app (see Step 3 and Step 5) |
+| No secrets in Git | ghcr.io login uses the built-in `GITHUB_TOKEN`; Terraform state and kubeconfig are git-ignored; tracked files and history were scanned for keys and tokens |
+| Rollback is shown live | `helm rollback` after a deliberately bad release (see Step 5) |
+
+### Known limitations
+
+- The cluster is a local kind cluster created with Terraform, not a cloud cluster in a default VPC, because I have no cloud account.
+- The CI deploy job deploys to a disposable cluster. The long-lived local cluster is deployed with Helm by hand.
+- .NET 7 and Node 18 are past end of life. The images are patched at the OS level, but the runtimes should be upgraded.
+- The database credentials are demo values hardcoded in the application code, and redis and Postgres use `emptyDir` storage.
+
 ## Step 1: Run it locally
 
 - Forked the repo to my GitHub account, cloned it, and added the original as the `upstream` remote.
@@ -214,3 +296,13 @@ After the build, scan and push jobs succeed on a push to `main`, a `deploy` job 
 4. Deletes the cluster, even if a step failed. On failure it prints pod descriptions and logs first.
 
 So one push builds, scans, deploys and verifies, with no manual step. This is the Option B approach described under Step 4: the pipeline deploys to a disposable cluster, not to my long-lived local cluster, because GitHub's runners cannot reach a cluster on my laptop and I have no cloud account. The real deployment and the rollback demo run against the local cluster with Helm (Step 5).
+
+### CI evidence
+
+All jobs green on a push to `main` (tests, build, scan and push for each image, then the deploy job):
+
+![CI run](docs/images/step4-ci-green.jpg)
+
+The smoke test casts a vote and waits for it to appear in PostgreSQL:
+
+![Smoke test](docs/images/step4-smoke-test.jpg)
